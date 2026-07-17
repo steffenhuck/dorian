@@ -1,0 +1,1181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Picture of Dorian Gray — a game of chapters</title>
+<script data-goatcounter="https://steffenhuck.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+<style>
+  :root{
+    --wall-a:#171210; --wall-b:#241b16;
+    --ink:#2b2118;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{min-height:100%}
+  body{
+    background:
+      radial-gradient(120% 90% at 50% 0%, var(--wall-b) 0%, var(--wall-a) 70%),
+      var(--wall-a);
+    color:#cfc4ae;
+    font-family:Georgia,'Iowan Old Style','Palatino Linotype','Book Antiqua',serif;
+    display:flex;flex-direction:column;align-items:center;
+    padding:2.2rem 1rem 3rem;
+  }
+  /* wallpaper stripe, very faint */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 2px, transparent 2px 26px);
+  }
+  #pall{
+    width:min(760px,96vw);height:54px;position:relative;z-index:2;margin-bottom:-30px;
+    background:
+      radial-gradient(60% 120% at 20% 0%, rgba(58,26,64,.9), rgba(30,12,34,.95) 70%),
+      linear-gradient(180deg,#2c1030,#1a0a1e);
+    border-radius:0 0 46% 38% / 0 0 100% 90%;
+    box-shadow:0 10px 22px rgba(0,0,0,.55), inset 0 -8px 14px rgba(0,0,0,.5), inset 0 4px 6px rgba(160,120,180,.12);
+  }
+  #pall::after{
+    content:"";position:absolute;left:8%;right:12%;bottom:6px;height:8px;
+    background:repeating-linear-gradient(90deg, rgba(197,160,84,.35) 0 7px, transparent 7px 22px);
+    filter:blur(.4px);
+  }
+  #frame{
+    width:min(760px,96vw);position:relative;z-index:1;
+    padding:26px;
+    background:
+      linear-gradient(135deg,#6b5426,#c9a44e 18%,#8a6c2e 38%,#d9b866 55%,#7c6128 74%,#b08d3e 92%,#5f4a20);
+    border-radius:4px;
+    box-shadow:0 22px 60px rgba(0,0,0,.7), inset 0 0 0 2px rgba(46,34,12,.85), inset 0 0 18px rgba(0,0,0,.35);
+  }
+  #frame::before{
+    content:"";position:absolute;inset:9px;pointer-events:none;border-radius:2px;
+    border:2px solid rgba(43,31,10,.55);
+    box-shadow:inset 0 0 0 3px rgba(255,236,180,.14);
+  }
+  /* tarnish veil over the gilt, driven by JS */
+  #tarnish{position:absolute;inset:0;border-radius:4px;pointer-events:none;background:linear-gradient(135deg,rgba(24,20,12,.85),rgba(40,32,18,.7));opacity:0;transition:opacity 1.4s}
+  #canvas{
+    position:relative;overflow:hidden;border-radius:1px;
+    background:#efe6cf;
+    min-height:340px;
+    padding:2.4rem 2.6rem 2.6rem;
+    box-shadow:inset 0 0 26px rgba(84,62,34,.28);
+    transition:background 1.6s;
+  }
+  /* weave / paint grain */
+  #canvas::before{
+    content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.06'/></feComponentTransfer></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
+  }
+  #crack{
+    position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='c'><feTurbulence type='turbulence' baseFrequency='0.055' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.10  0 0 0 0.9 -0.28'/></filter><rect width='260' height='260' filter='url(%23c)'/></svg>");
+    background-size:260px 260px;
+  }
+  #vignette{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.8s;
+    background:radial-gradient(115% 100% at 50% 42%, transparent 42%, rgba(38,26,12,.55) 76%, rgba(22,14,6,.92) 100%);}
+  #fleck{
+    position:absolute;right:14%;bottom:9%;width:74px;height:60px;pointer-events:none;opacity:0;transition:opacity 2.4s, transform 2.4s;
+    background:
+      radial-gradient(38% 42% at 46% 52%, rgba(122,16,18,.85), rgba(122,16,18,0) 70%),
+      radial-gradient(20% 22% at 68% 34%, rgba(96,10,12,.8), rgba(96,10,12,0) 70%),
+      radial-gradient(14% 16% at 30% 30%, rgba(96,10,12,.7), rgba(96,10,12,0) 70%);
+    filter:blur(1px);transform:scale(.6);
+    mix-blend-mode:multiply;
+  }
+  #grace{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 3s;
+    background:radial-gradient(80% 70% at 50% 30%, rgba(255,244,205,.5), transparent 70%);mix-blend-mode:screen;}
+  #inner{position:relative;z-index:3}
+  #station{
+    font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;
+    color:rgba(90,68,40,.85);text-align:center;margin-bottom:1.4rem;
+    transition:color 1.6s;
+  }
+  #chapterhead{
+    display:none;text-align:center;font-variant:small-caps;letter-spacing:.2em;
+    color:rgba(80,58,32,.9);margin-bottom:1.1rem;font-size:1.02rem;
+  }
+  #text{color:var(--ink);font-size:1.06rem;line-height:1.72;transition:color 1.6s}
+  #text p{margin:0 0 1.05em}
+  #text p:last-child{margin-bottom:0}
+  #text .q{font-style:italic}
+  #text .flash{display:block;margin:.9em 1.6em;font-style:italic}
+  .titlepage h1{
+    font-weight:normal;text-align:center;font-size:1.85rem;letter-spacing:.05em;margin-bottom:.4rem;color:var(--ink);
+  }
+  .titlepage .sub{text-align:center;font-style:italic;margin-bottom:.2rem}
+  .titlepage .credit{text-align:center;font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(90,68,40,.85);margin-bottom:1.6rem}
+  .titlepage hr{border:none;border-top:1px solid rgba(90,68,40,.4);width:38%;margin:1.4rem auto}
+  #finis{display:none;text-align:center}
+  #finis .fname{font-variant:small-caps;letter-spacing:.24em;font-size:1.3rem;color:var(--ink);margin:.4rem 0 1rem}
+  #finis .verdict{font-style:italic;margin-bottom:1.2rem;color:var(--ink)}
+  #finis .cmp{text-align:left;color:var(--ink);font-size:1.02rem;line-height:1.7;margin:0 auto 1.4rem;max-width:56ch}
+  #finis .cmp p{margin-bottom:.9em}
+  #finis .fword{letter-spacing:.5em;font-size:.8rem;color:rgba(90,68,40,.9);margin-bottom:.6rem}
+  #choices{
+    width:min(760px,96vw);margin-top:1.15rem;display:flex;flex-direction:column;gap:.6rem;align-items:center;
+  }
+  .card{
+    width:100%;max-width:620px;
+    background:linear-gradient(180deg,#e9dfc6,#ddd0b1);
+    color:#33281c;border:1px solid #8f7443;border-radius:2px;
+    box-shadow:0 3px 10px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,250,230,.4);
+    padding:.66rem 1rem .7rem;
+    font-family:inherit;font-size:.97rem;line-height:1.45;text-align:left;cursor:pointer;
+    transition:transform .12s, box-shadow .12s, background .3s;
+  }
+  .card:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,.55), inset 0 0 0 1px rgba(255,250,230,.5)}
+  .card:focus-visible{outline:2px solid #d9b866;outline-offset:2px}
+  .card.bare{
+    background:none;border:none;box-shadow:none;color:#9c8f76;text-align:center;font-style:italic;
+  }
+  .card.bare:hover{transform:none;color:#c9bb9d}
+  footer{margin-top:2.6rem;font-style:italic;font-size:.9rem}
+  footer a{color:#8d7f68;text-decoration:none;border-bottom:1px dotted #6b604e}
+  footer a:hover{color:#cfc4ae}
+  @media (max-width:560px){
+    #frame{padding:14px}
+    #canvas{padding:1.5rem 1.15rem 1.7rem}
+    #text{font-size:1rem}
+  }
+</style>
+</head>
+<body>
+<div id="pall" aria-hidden="true"></div>
+<div id="frame">
+  <div id="canvas">
+    <div id="crack"></div><div id="vignette"></div><div id="fleck"></div><div id="grace"></div>
+    <div id="inner">
+      <div id="station"></div>
+      <div id="chapterhead"></div>
+      <div id="text"></div>
+      <div id="finis">
+        <div class="fword">FINIS</div>
+        <div class="fname"></div>
+        <div class="verdict"></div>
+        <div class="cmp"></div>
+      </div>
+    </div>
+  </div>
+  <div id="tarnish"></div>
+</div>
+<div id="choices"></div>
+<footer><a href="https://steffenhuck.github.io"><i>steffen huck</i></a></footer>
+
+<script>
+"use strict";
+
+/* ============================== STATE ============================== */
+let S;
+function freshState(){
+  return {
+    wish:false, basil:false, mercy:false, poisoned:false, blood:false,
+    hunted:false,          // path bookkeeping for station VIII only
+    marks:{},              // one-node / short-range texture
+    rot:0, fade:0, age:0,  // canvas condition
+    divs:[],               // load-bearing divergences: {at, phrase}
+    path:[],               // node ids visited
+    node:'title'
+  };
+}
+function save(){ try{ localStorage.setItem('dorian-save', JSON.stringify(S)); }catch(e){} }
+function loadSave(){ try{ const j=localStorage.getItem('dorian-save'); if(j){ const s=JSON.parse(j); if(s && s.node && s.node!=='title' && NODES[s.node]) return s; } }catch(e){} return null; }
+function clearSave(){ try{ localStorage.removeItem('dorian-save'); }catch(e){} }
+
+/* ============================== NODES ==============================
+   Node: { st: station-line, text: string|fn(S)->html, choices: fn(S)->[choice], head?: chapter-head }
+   Choice: { t: label, go: id|fn(S)->id, canon?:true, bare?:true,
+             set?:fn(S), rot?:n, fade?:n, div?: phrase, cond?:fn(S)->bool }
+=================================================================== */
+
+const p = (...ps)=>ps.map(x=>`<p>${x}</p>`).join('');
+
+const NODES = {
+
+/* ---------- TITLE ---------- */
+title:{
+  st:'', text:(s)=>`
+    <div class="titlepage">
+      <h1>The Picture of Dorian&nbsp;Gray</h1>
+      <div class="sub">a game of chapters, after Oscar Wilde</div>
+      <div class="credit">from the author’s text of 1891</div>
+      ${p(
+      `<span class="q">The artist is the creator of beautiful things</span> — so begins the preface of the man who wrote the book, and the man who painted me believed it. I am the portrait. I hung one summer in a studio full of roses; I have hung ever since in a locked room at the top of a house in Grosvenor Square, under a purple pall, keeping the only honest diary in London.`,
+      `The book you may have read follows one man down one staircase. I kept the record of every stair he did not take. There is no such thing as a moral or an immoral book; there are only the pages one turns, and the pages one is turned by.`,
+      `The reader of a book follows. The reader of this book chooses.`
+      )}
+      <hr>
+    </div>`,
+  choices:(s)=>{
+    const c=[{t:'Draw back the pall, and begin.', go:'n1', canon:true}];
+    if(window.__resume) c.push({t:'Return to the picture where you left it.', go:'__resume'});
+    return c;
+  }
+},
+
+/* ================= STATION I — a June afternoon, the studio ================= */
+n1:{
+  st:'JUNE, 18— · THE STUDIO OF BASIL HALLWARD',
+  text:(s)=>p(
+    `Roses at the window, the dim roar of London like an organ held down soft. Basil Hallward — a painter with a rugged, honest face, who has put more of himself into me than is quite safe — is at the easel, finishing. On the divan lies Lord Henry Wotton, a married man of unmarried habits, who does nothing whatever and says everything; he has come to look at me and stayed to talk. On the dais stands the sitter: Dorian Gray, little more than a lad though really past twenty, with the look of one whom the world has not yet touched. He is yours now. Basil wants Lord Henry gone before the last sitting; Lord Henry has reached for his hat.`
+  ),
+  choices:(s)=>[
+    {t:'Beg Lord Henry to stay and talk through the sitting.', go:'n2', canon:true, set:x=>x.marks.stay=1},
+    {t:'Let Lord Henry go to his man at the Orleans.', go:'n2', set:x=>x.marks.letgo=1},
+    {t:'Ask Basil, instead, why he will never exhibit the picture.', go:'n2', set:x=>x.marks.asked=1}
+  ]
+},
+n2:{
+  st:'JUNE, 18— · THE GARDEN',
+  text:(s)=>p(
+    (s.marks.letgo?`Lord Henry did not go; men like him never go when it would be convenient. `:s.marks.asked?`Basil would not answer; Lord Henry answered for him, at length, about everything else. `:``)+
+    `The sitting broke for air, and in the garden Lord Henry found the boy alone among the lilacs and gave him the sermon he gives no one twice. <span class="q">“Youth! Youth! There is absolutely nothing in the world but youth!”</span> — and much besides, about the senses curing the soul, about the courage of yielding, about how little time there is. He is the best talker in England, and the bill for his conversation is never sent to his own address. Through the door, Basil can be seen at the easel, mixing white, waiting.`
+  ),
+  choices:(s)=>[
+    {t:'Stay among the lilacs and drink in every word.', go:'n3', canon:true, rot:.02},
+    {t:'Go back inside, to Basil and the easel.', go:'n3', set:x=>x.basil=true, div:'in the garden, where his Dorian drank the sermon and yours went back to the easel'},
+    {t:'Laugh at Lord Henry, and call the whole sermon a pose.', go:'n3', set:x=>x.marks.laughed=1}
+  ]
+},
+n3:{
+  st:'JUNE, 18— · THE UNVEILING',
+  text:(s)=>p(
+    `Basil wrote his name in vermilion in my corner and stood away. Dorian looked at me — and saw, for the first time, what everyone else had always seen. The pleasure lasted a moment. Then Lord Henry’s sermon did its work, the way a seed does its work, quietly and underneath: <span class="q">the scarlet would pass from his lips and the gold from his hair; I would keep both.</span> A painting is patient. A boy is not. Something rose in him that wanted saying${s.basil?', and something steadier, learned an hour ago at the easel, that did not':''}.`
+  ),
+  choices:(s)=>{
+    const c=[
+      {t:'“If it were I who was to be always young, and the picture that was to grow old — I would give my soul for that.”', go:'n3b', canon:true, set:x=>{x.wish=true}, rot:.06},
+      {t:'“Why should the picture keep what I must lose? I am jealous of it — let it do the losing.”', go:'n3b', set:x=>{x.wish=true;x.marks.envy=1}, rot:.06},
+      {t:'“The picture will mock me one day. Let it grow old instead of me.”', go:'n3b', set:x=>{x.wish=true;x.marks.mock=1}, rot:.06}
+    ];
+    if(s.basil) c.push({t:'Hold your tongue; look; let it be only paint.', go:'n4', div:'before the finished picture, where his Dorian prayed and yours held his tongue'});
+    return c;
+  }
+},
+n3b:{
+  st:'JUNE, 18— · THE PALETTE-KNIFE',
+  text:(s)=>p(
+    `Envy is a prayer said sideways, and this one was heard, though nothing in the room moved. What moved was Basil: stung by the quarrel that followed, he went to the deal table and took up the long palette-knife, meaning to rip me from end to end — better no picture than a picture that had made three friends hate each other in an afternoon.`
+  ),
+  choices:(s)=>[
+    {t:'Tear the knife out of Basil’s hand — “Don’t, Basil! It would be murder!”', go:'n4', canon:true},
+    {t:'Let Basil rip the canvas.', go:'n4', set:x=>{x.marks.slashed=1;x.wish=false;x.marks.slashedEver=1}, div:'at the palette-knife, which his Dorian caught and yours let fall'}
+  ]
+},
+n4:{
+  st:'JUNE, 18— · TEA',
+  text:(s)=> s.marks.slashedEver ?
+    p(`Basil cut twice and stopped, sick at himself. I survive in strips, rolled in the Italian chest — a diary with its spine broken, still keeping entries. Tea came in anyway; the English always send tea to an execution. Lord Henry proposed the theatre.`)
+    : p(`Tea, on a hissing Georgian urn, and the picture — I — promised to Dorian, varnished and framed and sent home. Lord Henry proposed the theatre; Basil, quietly, proposed dinner instead, and meant: <span class="q">stay</span>.`),
+  choices:(s)=>[
+    {t:'The theatre to-night, with Lord Henry.', go:'n5', canon:true},
+    {t:'Dine quietly with Basil.', go:'n5', set:x=>x.basil=true, div:'over the teacups, where yours dined with the painter'}
+  ]
+},
+
+/* ================= STATION II — the next day; a month of the Season ================= */
+n5:{
+  st:'JUNE, 18— · LUNCHEON AT LADY AGATHA’S',
+  text:(s)=>p(
+    `Next day, luncheon at Lady Agatha’s — Lord Henry’s aunt, a good woman with a passion for the East End, who has been promised a duet. Dorian plays the piano beautifully, and had sworn to play it, last Tuesday, at her club in Whitechapel, before the dockers and their wives; he forgot. Over the quails Lord Henry improvised on folly until the table laughed itself young again, and then stood in the doorway with the whole Season shining behind him like a carriage-lamp. “I am going to the park,” he said. Lady Agatha, gathering her lists, mentioned — gently, the way saints nag — that Whitechapel keeps its promises too.`
+  ),
+  choices:(s)=>[
+    {t:'The park, with Lord Henry.', go:'n6', canon:true, rot:.02},
+    {t:'Whitechapel, this afternoon: keep the promise, play the duet.', go:'A1', div:'on the second afternoon, between a park and a promise'},
+    {t:'Neither: spend the afternoon at Basil’s studio.', go:'n6', set:x=>x.basil=true, div:'on the second afternoon, when yours chose the studio'}
+  ]
+},
+n6:{
+  st:'JULY, 18— · CURZON STREET, A MONTH LATER',
+  text:(s)=>p(
+    `A month of Lord Henry: dinners, boxes, sentences. <span class="q">“Never marry, Dorian.”</span> The boy came to Curzon Street to say he was in love — with an actress.`
+  ),
+  choices:(s)=>[
+    {t:'Tell Lord Henry everything about the actress, name and all.', go:'n7', canon:true},
+    {t:'Keep her name back, and give him only the fact.', go:'n7', set:x=>x.marks.unnamed=1}
+  ]
+},
+n7:{
+  st:'JULY, 18— · THE ROYAL THEATRE, HOLBORN',
+  text:(s)=>p(
+    `Her name is Sibyl Vane. Seventeen; Juliet, three nights a week, in a gilt-and-plaster theatre off Holborn where the manager, one Isaacs, has bankrupted himself five times for Shakespeare and holds her to articles for three years more. Dorian paid a guinea for a box and came back every night for three weeks. She lives with a faded mother and a brother, James, sixteen, rough as she is fine, who sails for Australia within the week and has sworn — the picture records oaths; they mature — that if any gentleman ever wrongs his sister, he will track the man down and kill him like a dog. She calls Dorian <span class="q">Prince Charming</span>. She does not know his name. Last night, in the greenroom, they kissed.`
+  ),
+  choices:(s)=>[
+    {t:'Announce the engagement: telegraph Lord Henry to-night.', go:'n8', canon:true},
+    {t:'Write first to Basil, before anyone.', go:'n8', set:x=>x.marks.wroteBasil=1},
+    {t:'Press Sibyl to leave the stage at once, articles or no.', go:'n8', set:x=>x.marks.pressed=1}
+  ]
+},
+n8:{
+  st:'JULY, 18— · DINNER AT THE BRISTOL',
+  text:(s)=>p(
+    `Dinner for three at the Bristol: Basil grave, Lord Henry glittering. <span class="q">“Whenever a man does a thoroughly stupid thing, it is always from the noblest motives,”</span> said the one; the other only asked whether the girl was good. To-morrow night they will both be taken to see her act — Juliet, for their judgment. A man in love invites the jury himself, and calls it pride.`
+  ),
+  choices:(s)=>[
+    {t:'Boast of Sibyl’s genius until the coffee comes.', go:'n9', canon:true},
+    {t:'Beg Basil to be glad for you.', go:'n9', set:x=>x.marks.begged=1},
+    {t:'Apologise for the suddenness of it all.', go:'n9', set:x=>x.marks.apol=1}
+  ]
+},
+
+/* ================= STATION III — the theatre ================= */
+n9:{
+  st:'JULY, 18— · THE BOX',
+  text:(s)=>p(`The house crowded and hot, the gallery in shirt-sleeves, oranges going round. Isaacs bowing to the velvet. The band scraped. The curtain hung.`),
+  choices:(s)=>[
+    {t:'Watch the house, and let Lord Henry talk.', go:'n10', canon:true},
+    {t:'Watch only the curtain, for her.', go:'n10', set:x=>x.marks.watched=1}
+  ]
+},
+n10:{
+  st:'JULY, 18— · THREE ACTS',
+  text:(s)=>p(
+    `She was lovely, and she was wooden. The balcony speech came out like a lesson beaten into a schoolgirl; the pit whistled; the gallery laughed and left. Lord Henry said she was quite beautiful and quite unable to act, and put on his coat. Basil said she must be ill. Dorian sat white in the box while his two witnesses made for the door, and the third act dragged up its curtain on empty benches.`
+  ),
+  choices:(s)=>[
+    {t:'Sit the play out to the end, alone.', go:'n11', canon:true, rot:.02},
+    {t:'Go behind to Sibyl at the interval, before the end.', go:'n11', set:x=>x.marks.interval=1},
+    {t:'Leave with Basil and Lord Henry, and come back after.', go:'n11', set:x=>x.marks.leftfirst=1}
+  ]
+},
+n11:{
+  st:'JULY, 18— · THE GREENROOM',
+  text:(s)=>p(
+    `${s.marks.interval?'He went to her before the end, and she met him already shining. ':''}In the greenroom she stood alone with a look of triumph, lit like a saint who has burned her church. She tried to give him the reason as a gift:`,
+    `<span class="flash">“Dorian, before I knew you, acting was the one reality of my life. It was only in the theatre that I lived. I believed in everything. You came — oh, my beautiful love! — and you freed my soul from prison. You taught me what reality really is. To-night, for the first time, I saw through the hollowness of the empty pageant in which I had always played… I have grown sick of shadows. You are more to me than all art can ever be. Take me away, Dorian — take me away with you.”</span>`,
+    `A man may hear that as a vow, or as a resignation from the only post he hired her for. In the doorway the draught moved the gas, and the little flames bowed, and waited, as I waited, miles off, in a house he had not slept in yet.`
+  ),
+  choices:(s)=>[
+    {t:'“You have killed my love. Without your art, you are nothing.” Leave her there.', go:'n12', canon:true, rot:.10},
+    {t:'Take Sibyl out of the theatre to-night, whatever she is on a stage.', go:'n14b', set:x=>{x.mercy=true;x.marks.mercyAway=1}, div:'at the greenroom door, where his Dorian wrote cruelty and yours wrote mercy'},
+    {t:'“Then the stage has lost you. Marry me this week.”', go:(x)=> x.basil?'B1':'n14b', set:x=>{x.mercy=true;x.marks.triedMarry=1}, div:'at the greenroom door, where yours proposed marriage to a bad actress'}
+  ]
+},
+
+/* ================= STATION IV — that night and after ================= */
+n12:{
+  st:'JULY, 18— · COVENT GARDEN, DAWN',
+  text:(s)=>p(`He walked it off till morning. Carts of nodding lilies in the polished empty street; a carter gave him cherries, plucked at midnight, cold with the moon. Then home.`),
+  choices:(s)=>[
+    {t:'Look at the picture before sleeping.', go:'n13', canon:true, set:x=>x.marks.sawTonight=1},
+    {t:'Sleep, and see nothing till noon.', go:'n13'}
+  ]
+},
+n13:{
+  st:'JULY, 18— · THE MORNING FACE',
+  text:(s)=> s.wish ? p(
+    (s.marks.sawTonight?
+      `In the dawn light he found it: a line at my mouth that Basil never painted. `:
+      `Past noon he rose, and idling by my frame he found it: a line at my mouth that Basil never painted. `)+
+    `A touch of cruelty, no more — but a mirror told him his own lips were smooth, and then he understood what he had bought, and with whose money. He remembered the greenroom${s.marks.envy?' and the sideways prayer':''}. A wish had been minuted. I had begun to keep his accounts.`,
+    `He set a screen in front of me — gilt Spanish leather, florid, adequate — and considered what a man does with a conscience he can furnish a room against.`
+  ) : p(
+    (s.marks.sawTonight?
+      `In the dawn light he studied me a long minute, half expecting something; `:
+      `Past noon he rose and stood before me, half expecting something; `)+
+    `${s.marks.slashedEver?'but strips in a chest keep no expressions, and his own face in the glass had to do all its own book-keeping.':'Basil’s paint held, unchanged; whatever had been offered him that afternoon in the studio had gone unaccepted, and the cruelty of the greenroom sat where cruelty ordinarily sits — on the living mouth, faint, his own.'} No wish had been minuted. The accounts, this time, were all his to keep.`
+  ),
+  choices:(s)=>[
+    {t:'Write Sibyl a letter of amends, page after page, and feel forgiven.', go:'n14', canon:true, rot:.02},
+    {t:'Go to the Euston Road this morning, in person.', go:'n14', set:x=>x.marks.euston=1, div:'on the morning after, when yours went to the Euston Road'},
+    {t:'Say nothing, mend nothing; dress for the club.', go:'n14', set:x=>x.marks.cold=1, rot:.04}
+  ]
+},
+n14:{
+  st:'JULY, 18— · LORD HENRY AT THE DOOR',
+  text:(s)=> s.marks.euston ?
+    p(`The blinds in the Euston Road were drawn. Sibyl Vane had swallowed something from the property-room before one in the morning — prussic acid or white lead; the coroner would choose — while he was still walking among the lilies. Whatever the letter-writers of this world believe, amends keep no earlier hours than the post. He came home to find Lord Henry’s note unopened on the tray and Lord Henry himself on the step, arranging the tragedy into an epigram before his hat was off: <span class="q">the girl had never really lived, and so she had never really died.</span>`)
+    :
+    p(`His letter lay finished and felt like absolution. On the tray, unopened, a note from Lord Henry; on the stair, before it could be read, Lord Henry’s own voice. The news came standing: Sibyl Vane had swallowed something from the property-room before one in the morning — while her Romeo was walking home through the flowers, being forgiven by himself. Lord Henry stayed an hour, and was kind the way a surgeon is quick: <span class="q">“Don’t waste your tears over Sibyl Vane. She was less real than they are… A wonderful ending to a wonderful play.”</span> Patti was singing that night; his sister had a box; he proposed it the way one proposes medicine.`),
+  choices:(s)=>[
+    {t:'Take the medicine: dine with Lord Henry, and the opera after.', go:'n15', canon:true, rot:.06},
+    {t:'Shut the door on Lord Henry and grieve it alone, raw.', go:'n15', set:x=>x.marks.rawgrief=1, div:'at the door, where his Dorian let the consoler in first and yours did not'},
+    {t:'Go to the inquest — stand in the Bell Tavern among strangers.', go:'n15', set:x=>x.marks.inquest=1, div:'at the door, where yours went to the inquest instead of the opera'}
+  ]
+},
+n14b:{
+  st:'JULY, 18— · THE MORNING AFTER MERCY',
+  text:(s)=>p(
+    `Sibyl Vane woke alive, which the other book never allowed her. ${s.marks.triedMarry?'The word <i>marriage</i> had been said aloud in a greenroom, and words said aloud acquire creditors. ':''}By noon the objections had formed a queue: the guardians (Lord Radley, apoplectic by post), the articles to Isaacs, and — smiling at the head of the queue, hat in hand — Lord Henry, who came to be charming about it. <span class="q">“Men marry because they are tired; women, because they are curious: both are disappointed.”</span> He was never wittier than when unpicking a good intention; the stitches came away one dinner at a time.`
+  ),
+  choices:(s)=>{
+    const c=[];
+    if(s.basil && s.marks.mercyAway) c.push({t:'Hold to Sibyl and marry her — Basil will stand by it.', go:'B1', set:x=>x.marks.triedMarry=1, div:'at the greenroom door, where yours proposed marriage to a bad actress'});
+    c.push({t:'See the sense in waiting, as Lord Henry counts sense.', go:'n15', canon:false, set:x=>x.marks.withered=1});
+    c.push({t:'Keep the engagement standing and say nothing to anyone.', go:'n15', set:x=>x.marks.quietEng=1});
+    return c;
+  }
+},
+n15:{
+  st:'AUGUST, 18— · BASIL’S VISIT',
+  text:(s)=> s.mercy ?
+    p(
+      `The engagement did not survive the Season; it was not broken, it evaporated, which leaves no pieces to pick up and no one to blame, and that is why it is the favourite method of the well-bred. Sibyl Vane went back to the provinces with her mother, alive, employed, and unexplained. Basil came round when it was over — relieved, and ashamed of the relief. He asked Dorian to sit again; refused, he confessed instead, in a rush he regretted while it was still leaving him: the idolatry, the fear of showing me to the world, the too-much-of-himself in every flake of my paint. Wilde gave that speech no name, and neither shall I; it was love, and it was told to the one man in London who could only be flattered by it.`
+    )
+    :
+    p(
+      `Basil came the morning after the inquest made the papers, heart-broken, and found a boy discussing Patti. The reproach failed; the request that followed failed better. He wanted me for his Paris exhibition — Georges Petit, the Rue de Sèze, October — and Dorian, white to the lips, wanted to know first why a man paints a thing and then hides it. So Basil confessed: the idolatry, the fear that every flake of my paint showed his secret, the too-much-of-himself. Wilde gave that speech no name, and neither shall I; it was love, told to the one man in London who could only be flattered by it.${s.wish?' Nobody looked behind the screen. Everybody thought about it.':''}`
+    ),
+  choices:(s)=> s.mercy ? [
+    {t:'Hear Basil’s confession out, and promise him nothing.', go:'n17', canon:true},
+    {t:'Promise Basil you will sit for him again — and mean it as a kindness.', go:'n17', set:x=>x.marks.promised=1},
+    {t:'Tell Basil about the studio afternoon, wish and all.', go:'n17', set:x=>x.marks.toldBasil=1}
+  ] : [
+    {t:'Refuse the exhibition; keep Basil’s confession like a coin.', go:(x)=>x.wish?'n16':'n17', canon:true, rot:.02},
+    {t:'Refuse everything, coldly, and let the friendship take the wound.', go:(x)=>x.wish?'n16':'n17', set:x=>x.marks.coldBasil=1},
+    {t:'Move the screen an inch — and stop, and cover it again.', go:(x)=>x.wish?'n16':'n17', set:x=>x.marks.almost=1, cond:x=>x.wish}
+  ]
+},
+n16:{
+  st:'AUGUST, 18— · THE OLD SCHOOLROOM',
+  text:(s)=>p(
+    `Mrs. Leaf, the housekeeper, gave up the key under protest: the old schoolroom at the top of the house, locked since his grandfather Kelso died — dust, the Italian chest he hid in as a boy, a tapestry king and queen at their endless chess; the room where a loveless old man had kept a beautiful daughter’s child out of sight. Now the child stood in the hall with the key in one hand, while the frame-maker’s men waited beside a purple-and-gold pall that had lain, once, over the dead. The question before the house was where a man buries a live thing.`
+  ),
+  choices:(s)=>[
+    {t:'Lock the picture in the schoolroom and pocket the key.', go:'n17', canon:true, rot:.02},
+    {t:'Send the picture down to Selby Royal, his house in Nottinghamshire — distance instead of a lock.', go:'n17', set:x=>x.marks.selbyAttic=1},
+    {t:'Burn the canvas in the grate this evening, and be done with housekeeping.', go:'E1fire', div:'in the second week, where his Dorian bought a screen and yours bought firewood'}
+  ]
+},
+n17:{
+  st:'AUGUST, 18— · A PARCEL FROM CURZON STREET',
+  text:(s)=>p(`From Lord Henry, with a newspaper he should not have marked: a book bound in yellow paper, the cover slightly torn. A French novel without a plot, with one character. It has been called poisonous. It has never been called wrong.`),
+  choices:(s)=>[
+    {t:'Read the yellow book until the light fails, and then by lamp.', go:'n18', canon:true, set:x=>x.poisoned=true, rot:.10},
+    {t:'Send the yellow book back to Curzon Street with thanks.', go:'n18', div:'over a yellow book, returned uncut'},
+    {t:'Leave the yellow book unopened on the Florentine table.', go:'n18', div:'over a yellow book, left unopened'}
+  ]
+},
+
+/* ================= STATION V — the years ================= */
+n18:{
+  st:'18— TO 18— · THE YEARS, IN ONE SWEEP',
+  text:(s)=>{
+    const opener = s.poisoned
+      ? `For years he could not free himself from that book, and did not try. `
+      : `He had refused the book, which surprised the sender; the Season supplied its arguments anyway, in serial form. `;
+    const mercyline = (s.mercy && s.wish)
+      ? `The first change I recorded came in the second year — I shall not say over whom; the newspapers of that world only hint, and I keep their discipline — and after the first, the hand wrote faster. By then I too had been carried upstairs, quietly, between trains. `
+      : ``;
+    const selbyline = s.marks.selbyAttic
+      ? `(The Selby experiment lasted one winter: he could not sleep with me ninety miles away and a door he could not check, and had me carried back up the old stairs to the schoolroom.) `
+      : ``;
+    const nowish = (!s.wish)
+      ? `Understand my position in these years: the wish had ${s.marks.slashedEver?'died on a palette-knife':'never been said'}, so the years wrote on the man, as is customary, and left me merely out of date. What follows I watched the way any portrait watches — from behind the face of a younger stranger.`
+      : `${selbyline}He collected — jewels, embroideries, vestments, perfumes, instruments; a chapter of treasures in the other book — and I kept the only inventory that mattered. London began to whisper. Men who talked grossly fell silent when he came in; women who had adored him grew pallid when he passed; and always the face answered for him, twenty years old, unspotted, a receipt for goods never delivered.`;
+    return p(opener + mercyline, nowish);
+  },
+  choices:(s)=>[
+    {t:'Let the senses lead the years: the dens by the river, under other names.', go:'n19', canon:true, rot:.16},
+    {t:'Let the collections lead the years: the jewels, the copes, the catalogues.', go:'n19', rot:.14, set:x=>x.marks.collector=1},
+    {t:'Let the Roman ritual lead the years: incense, and almost believing.', go:'n19', rot:.14, set:x=>x.marks.ritual=1}
+  ]
+},
+n19:{
+  st:'18— · THE LOCKED ROOM',
+  text:(s)=> s.wish ?
+    p(`Some nights he brought a mirror up and held it beside me: the two arithmetics, side by side. Mine crawled. His slept.`)
+    : p( s.marks.slashedEver ?
+        `Some nights he lifted the lid of the Italian chest where my strips lie rolled, and counted the years against them, the ordinary way.`
+        : `Some nights he stood before me in the library with a glass in his hand: the face he was leaving, one year at a time, the ordinary way.`),
+  choices:(s)=>[
+    {t:'Smile at the arithmetic, and go down to supper.', go:'n20', canon:true, rot:.04},
+    {t:'Stay away from the picture for a whole year.', go:'n20', set:x=>x.marks.away=1},
+    {t:'Try a prayer, alone, before the canvas.', go:'n20', set:x=>x.marks.prayedAlone=1}
+  ]
+},
+n20:{
+  st:'18— · WHISPERS',
+  text:(s)=>{
+    const pray = s.marks.prayedAlone ? `(The prayer, for the record: nothing moved. Prayers, like cheques, want a second signature.) ` : ``;
+    return p(pray+
+    `The Duke of Berwick left the smoking-room of the Churchill when he entered it. A list went round London with his friendships on it, each name a little worse for wear: a boy in the Guards who ended himself; Sir Henry Ashton, gone abroad with a tarnished name; young Adrian Singleton, who signed what he shouldn’t; others. Nothing was ever said plainly. In that world ruin is a rumour with a good tailor. Basil, they told me later, defended him at dinners, and looked less certain every year.`);
+  },
+  choices:(s)=>[
+    {t:'Face the smoking-room down, and keep dining out.', go:'n21', canon:true, rot:.02},
+    {t:'Take a season at Trouville until the whispers tire.', go:'n21', set:x=>x.marks.trouville=1},
+    {t:'Answer nothing; buy enamels.', go:'n21', set:x=>x.marks.enamels=1}
+  ]
+},
+
+/* ================= STATION VI — the ninth of November ================= */
+n21:{
+  st:'THE NINTH OF NOVEMBER · EVE OF HIS THIRTY-EIGHTH BIRTHDAY',
+  text:(s)=>p(
+    `Fog, and eleven o’clock, and home from Lord Henry’s. On the pavement by Grosvenor Square a man passed him walking fast, grey ulster, bag in hand: Basil Hallward — the painter; my maker; older now — bound for Paris by the midnight train, and come first, all evening, to say something that had been nine years rising. The fog held them apart a moment longer, like a curtain unsure of its cue.`
+  ),
+  choices:(s)=>[
+    {t:'Walk on unrecognised, and let Basil catch his train.', go:'n26', set:x=>x.marks.passed=1, div:'in the fog, where his Dorian was recognised and yours walked on'},
+    {t:'Take Basil’s arm and bring him in out of the fog.', go:'n22', canon:true}
+  ]
+},
+n22:{
+  st:'THE NINTH OF NOVEMBER · THE LIBRARY',
+  text:(s)=>p(
+    `Half an hour, Basil said, and it took less: the charges, name by name, laid out like surgical instruments — Berwick’s back, Staveley’s sneer, the boy in the Guards, Ashton, Singleton, Kent’s son, the Perth boy; the women; the houses a man is seen leaving at dawn. <span class="q">“I want a plain answer, Dorian. Deny them. Can’t you see what I am going through?”</span> He did not believe a word he was repeating. That was the unforgivable part: he wanted to be lied to, by a face he had painted, and the face was still good for it.`,
+    `<span class="q">“Sin is a thing that writes itself across a man’s face,”</span> said the man who had never seen my ledger. Upstairs, I waited to be introduced.`
+  ),
+  choices:(s)=> s.wish ? [
+    {t:'Deny everything, smiling, and see Basil to his train.', go:'n26', set:x=>x.marks.denied=1, div:'on the stairs, which his Dorian climbed with the painter and yours never let him reach'},
+    {t:'“Come upstairs, Basil. You shall see my soul — it is your own handiwork.”', go:'n23', canon:true, rot:.02}
+  ] : [
+    {t:'Deny everything, smiling, and see Basil to his train.', go:'n26', set:x=>x.marks.denied=1, div:'on the stairs, where yours sent the painter away with a lie'},
+    {t:'Tell Basil the truth in plain words, with nothing to show for it.', go:'n26', set:x=>x.marks.confessedPlain=1, div:'in the library, where yours told the painter the truth in plain words'}
+  ]
+},
+n23:{
+  st:'THE NINTH OF NOVEMBER · THE SCHOOLROOM',
+  text:(s)=>p(
+    `He carried the lamp himself. The pall came off, and Basil Hallward looked at me for the first time in nine years, and I watched my maker learn what I had been used for.`,
+    `<span class="flash">“Christ! what a thing I must have worshipped! It has the eyes of a devil… This is the face of a satyr.” — “It is the face of my soul.”</span>`,
+    `He held the candle to my corner and found his own name in vermilion. Then the painter did the one thing the wit downstairs could never have done: he dropped to the rickety chair and asked for a prayer. <span class="q">“Isn’t there a verse somewhere — ‘Though your sins be as scarlet, yet I will make them as white as snow’?”</span> On the painted chest between them, where it had been left some days before to cut a cord, lay a knife.`
+  ),
+  choices:(s)=>[
+    {t:'The knife.', go:'n24', canon:true, set:x=>x.blood=true, rot:.16},
+    {t:'Kneel with Basil and try the words.', go:(x)=> (x.basil && !x.poisoned) ? 'n23c' : 'n26', set:x=>{ if(!(x.basil && !x.poisoned)) x.marks.ashPrayer=1; }, div:'in the schoolroom, at the difference between a knife and a prayer'},
+    {t:'Send Basil to his train with the truth for luggage.', go:'n26', set:x=>x.marks.turnedOut=1, div:'in the schoolroom, where yours opened the door instead of the vein'}
+  ]
+},
+n23c:{
+  st:'THE NINTH OF NOVEMBER · THE VIGIL',
+  text:(s)=>p(
+    `They knelt on the dusty boards, the painter and the sitter, and said the schoolroom words in the schoolroom. I am obliged to record what I have never recorded before or since: something in my surface <i>stirred</i> — a thinning at the mouth, the way varnish gives before it lifts. Not much. A creditor’s nod. Basil missed his train and stayed the night, and by the grey of morning they had agreed on the terms, which were everything: the truth told, the names owned, me shown — witnesses, lawyers, the world’s slow teeth. Grace is not a reprieve. It is a harder sentence, served in daylight.`
+  ),
+  choices:(s)=>[
+    {t:'Begin it: send for the lawyer, and pull the shutters open.', go:'E6', canon:false},
+    {t:'Falter at the window — ask Basil for one more week of the old face.', go:'n26', set:x=>x.marks.faltered=1}
+  ]
+},
+n24:{
+  st:'THE NINTH OF NOVEMBER · TWENTY MINUTES TO TWO',
+  text:(s)=>p(
+    `Done in a minute, and quiet: the vein behind the ear, the head pressed to the table, the drip on the threadbare carpet. What remained of nine years of friendship sat at my table with bowed head and long fantastic arms, and I stood over it, since no one closed my eyes. He went down, rang his own bell, established his alibi with a sleepy valet, and sat in the library counting evidence. Basil was supposed to be in Paris. Nobody had seen him come in. Months, perhaps, before anyone asked. On the shelf, the Blue Book; in it, an address: <span class="q">Alan Campbell, 152, Hertford Street</span> — a chemist of genius, once an inseparable friend, five years estranged, and the one man in London who owed him a fear.`
+  ),
+  choices:(s)=>[
+    {t:'Send for Alan Campbell in the morning.', go:'n25', canon:true},
+    {t:'The boat-train from Victoria, to-night, and never come back.', go:'C1', div:'on the night of the ninth, between a chemist and a boat-train'},
+    {t:'Walk to the station-house in the fog and give himself up.', go:'E5law', div:'on the night of the ninth, when yours walked to the station-house'}
+  ]
+},
+n25:{
+  st:'THE TENTH OF NOVEMBER · ALAN CAMPBELL',
+  text:(s)=>p(
+    `Campbell came pale and stayed cold. He refused, as an honest man refuses — flatly, twice, with contempt for sauce. Then Dorian wrote a few words on a folded paper and pushed it across the table, and the honest man read it and aged in front of me, so to speak; I know the look. What was on the paper the record does not hold, and I decline to invent what Wilde declined to write. Campbell sat with his face in his hands, not yet risen, not yet gone for his chest of chemicals; the paper lay between them, still retrievable, the way a trigger is retrievable before it is pulled.`
+  ),
+  choices:(s)=>[
+    {t:'Hold Campbell to the folded paper, and wait downstairs while he works.', go:'n26', canon:true, rot:.04, set:x=>x.marks.campbellDone=1},
+    {t:'Take the paper back — spare Campbell, and catch the boat-train instead.', go:'C1', div:'at Alan Campbell’s refusal, which yours accepted'}
+  ]
+},
+n26:{
+  st:'NOVEMBER, 18— · LADY NARBOROUGH’S',
+  text:(s)=>{
+    if(s.blood) return p(`The smell of nitric acid kept the schoolroom a week; the thing at the table was gone by dusk; Alan Campbell had been saved from ruin in the way that ruins. And dinner at Lady Narborough’s went on as dinners do: exquisitely dressed, Parma violets in the button-hole, and nothing eaten, plate after plate. <span class="q">“You are quite out of sorts to-night, Dorian,”</span> said Lord Henry, who notices everything and suspects nothing useful.`);
+    const basilclause = s.marks.passed ? `Basil was in Paris by then, painting, unanswered questions packed in the Gladstone bag; he wrote twice.` :
+      s.marks.denied ? `Basil was in Paris by then, carrying his plain answer, which had been a lie.` :
+      s.marks.turnedOut ? `Basil was in Paris by then, carrying the truth, which is heavier.` :
+      s.marks.faltered ? `Basil waited out the promised week in Paris; the week has a way of renewing itself.` :
+      s.marks.ashPrayer ? `Basil was in Paris by then; the prayer had come out as ash, and he had taken the morning train with the taste of it.` :
+      s.marks.confessedPlain ? `Basil was in Paris by then, carrying a plain confession he had no way to test, which is a cruel parcel.` : ``;
+    return p(`Dinner at Lady Narborough’s, the Season’s machinery turning. ${basilclause} At table, ennui wore violets. <span class="q">“You are quite out of sorts to-night, Dorian,”</span> said Lord Henry, accurately, as always, about the surface.`);
+  },
+  choices:(s)=>[
+    {t:'Drink the champagne quickly and stay to the end.', go:(x)=> (x.blood||x.poisoned)?'n27':'n27q', canon:true},
+    {t:'Plead tiredness and leave before the men go up.', go:(x)=> (x.blood||x.poisoned)?'n27':'n27q', set:x=>x.marks.leftEarly=1}
+  ]
+},
+
+/* ================= STATION VII — the river ================= */
+n27q:{
+  st:'WINTER, 18— · A QUIET WINTER',
+  text:(s)=>p(`A quiet winter, for once: no dens, no debts to the darkness${s.blood?'':s.mercy?', and no dead girl under the year':''}. Quiet is not peace; it is only weather. Selby Royal announced its house-party.`),
+  choices:(s)=>[
+    {t:'Down to Selby Royal for the shooting.', go:'n30', canon:true},
+    {t:'Winter alone in town first, then follow the guests down.', go:'n30', set:x=>x.marks.lingered=1}
+  ]
+},
+n27:{
+  st:'NOVEMBER, 18— · THE DEN BY THE RIVER',
+  text:(s)=>p(
+    `Midnight, a hansom, a sovereign for speed, and the streets like the black web of some sprawling spider. In a den by the docks, among the twisted sleepers, he found Adrian Singleton — the boy from the whispered list, the one who signed what he shouldn’t, ruined young and politely; his brother pays, his friends don’t speak. <span class="q">“As long as one has this stuff, one doesn’t want friends,”</span> said Adrian, and lit the pipe. ${s.blood?'There are dens where the memory of old sins can be destroyed by the madness of sins that are new; that was the prescription, and he had come to have it made up.':'Habit had brought him; habit is the only host that never cancels.'}`
+  ),
+  choices:(s)=>[
+    {t:'The pipe and the ragged mattress, till the memory softens.', go:(x)=> x.mercy?'n29':'n28', rot:.04, set:x=>x.marks.pipe=1},
+    {t:'Press gold on Adrian Singleton and get him a bed away from here.', go:(x)=> x.mercy?'n29':'n28', set:x=>x.marks.adrianCoin=1},
+    {t:'On to the other place, by the wharf.', go:(x)=> x.mercy?'n29':'n28', canon:true, rot:.04}
+  ]
+},
+n28:{
+  st:'NOVEMBER, 18— · THE ARCHWAY',
+  text:(s)=>p(
+    `A woman’s voice behind him laughed out the old pet name — <span class="q">Prince Charming</span> — and in the archway a hand took his throat and a revolver came level with his head. James Vane: Sibyl’s brother, the sailor, sixteen when he swore in a shabby parlour to kill the man who wronged her, thirty-four now, and back from every sea with the oath still in working order. Eighteen years he has hunted a name that was never a name. <span class="q">“Make your peace with God, for to-night you are going to die.”</span>`,
+    s.wish
+      ? `Under the gaslamp there was one card left to play, and it was my card: the face I have been keeping smooth for him since July of 18—.`
+      : `Under the gaslamp there was no card left to play. The face had kept the years’ books faithfully, as faces do when nobody has arranged otherwise, and eighteen years were legible in it to a man who could not read.`
+  ),
+  choices:(s)=> s.wish ? [
+    {t:'“Set me under the lamp and look at my face. Your man would be forty.”', go:'n29', canon:true, set:x=>x.hunted=true, rot:.02},
+    {t:'“I am he. Your sister died of me. Do your job.”', go:'E5', div:'under the lamp, where his Dorian showed his face and yours showed his name'},
+    {t:'Offer James Vane every sovereign in London.', go:'n29', set:x=>{x.hunted=true;x.marks.gold=1}}
+  ] : [
+    {t:'“Set me under the lamp and look at my face.”', go:'E5', set:x=>x.marks.lampFailed=1, div:'under a dock lamp, which had no mercy to sell a man of thirty-eight'},
+    {t:'“I am he. Your sister died of me. Do your job.”', go:'E5', div:'under the lamp, where yours gave the brother his name'}
+  ]
+},
+n29:{
+  st:'NOVEMBER, 18— · THE WORD AT THE CORNER',
+  text:(s)=> s.hunted ?
+    p(`${s.marks.gold?'The purse was struck aside — that family was never for sale — but the lamp did its work: ':''}the boy’s face acquitted him, and the brother reeled away sick at his own hands. Then the woman from the bar reached the corner first. <span class="q">“It’s nigh on eighteen years since Prince Charming made me what I am… He hasn’t changed much since then. I have, though.”</span> I never saw that meeting; I record it as the coroner records weather. James Vane began to walk west.`)
+    : p(`He came home at dawn with the fog in his coat. The wharf place had kept its bargain: a night without memory. The year turned toward Selby and its house-party.`),
+  choices:(s)=>[
+    {t:'Wire Harvey to have the yacht made ready — the sea, soon.', go:'n30', set:x=>x.marks.yacht=1},
+    {t:'Go down to Selby Royal as planned, and fill the house with guests.', go:'n30', canon:true}
+  ]
+},
+
+/* ================= STATION VIII — Selby Royal ================= */
+n30:{
+  st:'WINTER, 18— · SELBY ROYAL, THE CONSERVATORY',
+  text:(s)=>{
+    const glass = s.hunted
+      ? `And then, pressed against the conservatory glass like a white handkerchief, a face: the sailor’s. He dropped where he stood, and was carried to a sofa, and lied about it beautifully at dinner.`
+      : (s.blood
+        ? `Lord Henry, reaching for effect over the teacups, said he should like to know someone who had committed a real murder; and our host went grey and held the table-edge, and lied about it beautifully at dinner.`
+        : `The party glittered and bored in the usual proportions, and our host was witty with the wrong sort of care, like a man carrying full glasses.`);
+    return p(
+      `Twelve guests at Selby Royal, his great house in Nottinghamshire; tea in the conservatory among the orchids. The Duchess of Monmouth — Gladys, clever, married to sixty jaded years of beetles-collecting — fenced with Lord Henry across the cups and flirted at Dorian with the ease of a woman who has read the rumours and prefers them to the man. ${glass}`
+    );
+  },
+  choices:(s)=>[
+    {t:'Steady yourself on the Duchess’s talk, and stay down among the guests.', go:'n31', canon:true},
+    {t:'Plead nerves and keep to your room until the shooting.', go:'n31', set:x=>x.marks.kept=1},
+    {t:'Give Lord Henry a half-truth about being in some danger.', go:'n31', set:x=>x.marks.halftruth=1}
+  ]
+},
+n31:{
+  st:'WINTER, 18— · THE SHOOTING PARTY',
+  text:(s)=>p(
+    `Frost like salt on the grass. Sir Geoffrey Clouston, the Duchess’s brother, jerked two spent cartridges from his gun as the party worked the pine-wood, beaters going through the bracken ahead. Out of a tussock, ears up, went a hare — such a grace of movement in the little thing that it asked, as beauty always asks, to be exempted.`
+  ),
+  choices:(s)=>[
+    {t:'Cry out — “Don’t shoot it, Geoffrey. Let it live.”', go:'n32', canon:true},
+    {t:'Say nothing, and let the guns be guns.', go:'n32', set:x=>x.marks.silentGun=1},
+    {t:'Turn back to the terrace with the Duchess before the drive.', go:'n32', set:x=>x.marks.terrace=1}
+  ]
+},
+n32:{
+  st:'WINTER, 18— · THE EMPTY STABLE',
+  text:(s)=>{
+    const shot = s.marks.terrace
+      ? `The shot came flat across the park while the Duchess was still laughing.`
+      : `Sir Geoffrey fired into the thicket after it.`;
+    const body = s.hunted
+      ? `Two cries: a hare’s, which is dreadful, and a man’s, which is worse. A beater, they said — except that no keeper knew him, and he looked a sort of sailor. Dorian galloped down to the Home Farm himself, and in the empty stable they took the spotted handkerchief off the face for him: James Vane, dead by a gentleman’s stray shot, on the land of the man he hunted. Mercy for the hare, none for the brother; the machinery of that world was never mine to answer for. I only paint what it does.`
+      : `Two cries: a hare’s, which is dreadful, and a man’s, which is worse. A beater — a stranger, it proved; no name on him, a sailor by his arms. The house-party called it a bad omen and changed for dinner.`;
+    return p(shot+' '+body);
+  },
+  choices:(s)=> s.hunted ? [
+    {t:'Look once more at James Vane’s face before they close the stable.', go:'n33', set:x=>x.marks.looked=1},
+    {t:'Cover the face and ride home.', go:'n33', canon:true}
+  ] : [
+    {t:'Pay for the stranger’s burial handsomely, and leave Selby early.', go:'n33', canon:true},
+    {t:'Leave the whole matter with the head-keeper.', go:'n33', set:x=>x.marks.leftKeeper=1}
+  ]
+},
+
+/* ================= STATION IX — the following spring ================= */
+n33:{
+  st:'MAY, 18— · THE ORCHARD',
+  head:'CHAPTER THE NINETEENTH',
+  text:(s)=>p(
+    `${s.hunted?'He had ridden back from the Home Farm with tears of safety in his eyes; by spring the safety had gone flat, as safety does, and wanted sweetening. ':''}Spring; a village near Selby; a girl in the orchard with apple-blossom falling into her hair. Hetty Merton — a farmer’s daughter, wonderfully like Sibyl Vane${s.mercy?' as Sibyl was at seventeen, before the provinces reclaimed her':', the actress he destroyed in the first year of this record'}. He has told her he is poor, and she believes him; he has told her he is wicked, and she laughed. They are to run away together at dawn. He stood under the trees the evening before, and for once — I record it — hesitated in the direction of goodness.`
+  ),
+  choices:(s)=>[
+    {t:'Spare Hetty: go back to town alone, and leave her as you found her.', go:'n34', canon:true, rot:.04},
+    {t:'Carry it through — the chaise at dawn, and away with her.', go:'n34', set:x=>x.marks.hetty=1, rot:.08, div:'in the orchard, where his Dorian spared the girl and yours kept the appointment'},
+    {t:'Never go near the village again, and never explain.', go:'n34', set:x=>x.marks.neverExplained=1, rot:.04}
+  ]
+},
+n34:{
+  st:'MAY, 18— · CURZON STREET, THE LAST DINNER',
+  head:'CHAPTER THE TWENTIETH',
+  text:(s)=>p(
+    `${s.marks.hetty?'He told Lord Henry nothing of the girl in the chaise; some experiments one keeps from the laboratory. ':'He told Lord Henry about the sparing of Hetty, and was laughed at gently for it: the beginning, said his friend, of a reformation ending in curiosity. '}Dinner wound down to the two of them and the piano. <span class="q">“What does it profit a man if he gain the whole world and lose — how does the quotation run? — his own soul?”</span> asked Lord Henry of the candles, having heard it from a street-preacher and found it dramatic. And then, stroking the parrot: <span class="q">“You are the type of what the age is searching for, and what it is afraid it has found… Life has been your art.”</span> Dorian played the nocturne and did not answer. The talk had him; the talk had always had him; the choices in this record grow few, and mine is the last hand that moves.`
+  ),
+  choices:(s)=>[
+    {t:'(the nocturne continues)', go:'n35', bare:true, canon:true, rot:.02}
+  ]
+},
+n35:{
+  st:'MAY, 18— · THE LOOK',
+  head:'CHAPTER THE LAST',
+  text:(s)=>{
+    const opener = s.marks.hetty
+      ? `He came back to town a fortnight later, the girl left in a Dover hotel with money and a lie, the boredom already setting in like weather.`
+      : `He walked home warm with his one good action.`;
+    if(!s.wish){
+      return p(
+        `${opener} In the library he took up the curiously carved mirror that Lord Henry had given him years ago, and looked a long time at a face of thirty-eight: the ordinary sentence, served at the ordinary rate. Then he took the lamp and went up to the ${s.marks.slashedEver?'chest where my strips lie rolled':'picture of a young man of extraordinary beauty, painted eighteen years ago and aged not at all'} — for it is the man who does the ageing, in the usual arrangement, and he had lived the usual arrangement, whatever else the whispers say he lived.`,
+        `He stood before ${s.marks.slashedEver?'the open chest':'me'} with the lamp raised, half believing, even now, that something should have been written here besides paint. Nothing was. I am the record of an afternoon in June; the rest he has carried on his own face, where everyone could read it, and no one ever reads. On the painted chest lay a knife, left some days before to cut a cord.`
+      );
+    }
+    const bloodline = s.blood
+      ? `save that in the eyes there was a look of cunning, and in the mouth the curved wrinkle of the hypocrite — and the scarlet dew that spotted the hand seemed brighter, and more like blood newly spilled; blood even on the hand that had not held the knife, and on the painted feet, as though the thing had dripped`
+      : `save that in the eyes there was a look of cunning, and in the mouth the curved wrinkle of the hypocrite`;
+    return p(
+      `${opener} In the library he took up the curiously carved mirror that Lord Henry had given him so many years ago, and loathed the face in it, and crushed the glass under his heel into silver splinters. It was his beauty that had ruined him, his beauty and the youth that he had prayed for. Then, wanting the proof of his reform, he took the lamp and went up, as I felt him coming, stair by stair, through the sympathies that bind us.`,
+      `The pall came off. <span class="q">He could see no change, ${bloodline}. The thing was still loathsome — more loathsome, if possible, than before.</span>`,
+      `Vanity? Curiosity? Hypocrisy? Had there been nothing more in his renunciation than that? On the painted chest, cleaned many times, bright, glistening, lay the knife${s.blood?' that had stabbed Basil Hallward':''}. <span class="q">As it had killed the painter${s.blood?'':'’s hopes'}, so it would kill the painter’s work, and all that that meant. It would kill the past, and when that was dead, he would be free.</span>`
+    );
+  },
+  choices:(s)=> s.wish ? [
+    {t:'The knife.', go:'E1', canon:true},
+    {t:'Confess: to the world, in the morning, with witnesses.', go:(x)=> (x.basil && !x.poisoned && !x.blood && !x.marks.hetty)?'E6':'n35b',
+      div:'on the last night, when yours resolved to confess'},
+    {t:'Cover the picture, lock the door, and go on living with it.', go:'n35b', set:x=>x.marks.covered=1}
+  ] : [
+    {t:'The knife: destroy the young man in the paint, and be one age at last.', go:'E1', canon:true},
+    {t:'Close the door on the picture and grow old with your own face.', go:'n35b', set:x=>x.marks.covered=1}
+  ]
+},
+n35b:{
+  st:'MAY, 18— · THE STAIRS',
+  text:(s)=>{
+    if(!s.wish) return p(
+      `He closed the door and went down, and lived — which the other book never tried. But a record half-kept nags worse than a record finished; he was on the stairs again within the year, lamp in hand, an ageing man visiting a young one who never asks questions. Sooner or later every such visit ends the same way.`
+    );
+    return p(
+    s.marks.covered
+      ? `He covered me and went down, and sat an hour in the library with the lamp burning, and the house ticking, and the resolution draining out of him the way warmth leaves a room. There is no living with me. I am not company; I am the bill. Before the candle was out he was on the stairs again.`
+      : `The resolve was sincere for the length of the staircase. On the landing it met the facts: the world would call him mad; there was no proof left of anything${s.blood?'; the proof had gone up a chimney in Hertford Street smoke':''}; and confession without a believer is only autobiography. The words had no second signature. He came back into the room.`
+    );
+  },
+  choices:(s)=>[
+    {t:'(the chapter turns)', go:'E1', bare:true, canon:true}
+  ]
+},
+
+/* ================= CORRIDOR A — THE DUET ================= */
+A1:{
+  st:'JUNE, 18— · A CLUB-ROOM IN WHITECHAPEL',
+  text:(s)=>p(
+    `Gas, deal benches, the smell of soap doing its best. Lady Agatha at the second piano, counting him in. The duet was not good; the applause was enormous; dockers clap for the intention. Afterwards a curate with a consumptive lung, Mr. Ashe, showed him the subscription-book as one shows a wound. Outside, wonderfully patient at the kerb, stood Lord Henry’s carriage, sent round on the chance, with the whole Season sitting in it like a hat left on a chair.`
+  ),
+  choices:(s)=>[
+    {t:'Go down to the carriage; the Season is waiting.', go:'n6', set:x=>x.marks.tasted=1},
+    {t:'Stay for the second set, and put your name in the subscription-book.', go:'A2', fade:.14, div:'between two afternoons, one in the park and one at a parish piano'}
+  ]
+},
+A2:{
+  st:'18— · THE SUBSCRIPTION WINTER',
+  text:(s)=>p(
+    `Lady Agatha’s world does not seduce; it employs. By Christmas he had a boys’ club to his name and Tuesdays that could not be moved. Lord Henry’s notes arrived weekly, then monthly, each wittier than the last, the way a bell is loudest just before it is out of earshot. Of what I felt, hanging in Grosvenor Square while my subject learned book-keeping: a portrait does not sulk. It thins. My paint had been mixed for another life, and no one was painting the new one.`
+  ),
+  choices:(s)=>[
+    {t:'Fund the boys’ club anonymously, through the lawyers.', go:'A3', fade:.14},
+    {t:'Fund it under your own name, and play every Tuesday.', go:'A3', fade:.14, set:x=>x.marks.named=1}
+  ]
+},
+A3:{
+  st:'18— · THE SETTLEMENT YEARS',
+  text:(s)=>p(`Of the Whitechapel years I hold three entries and a subscription-list. The archive lives where the novel went; he had gone elsewhere.`),
+  choices:(s)=>[
+    {t:'Take the fever ward, when the typhus comes up from the docks.', go:'A4', fade:.14},
+    {t:'Take the night school, and teach what a gentleman knows.', go:'A4', fade:.14, set:x=>x.marks.school=1}
+  ]
+},
+A4:{
+  st:'18— · THE FEVER WINTER',
+  text:(s)=>{
+    const wishline = s.wish
+      ? `One thing the ward did notice, and had the manners not to say: the years were not touching him. The mothers grew grey; the curate died; the gentleman at the piano stayed twenty. In Mayfair that is a miracle. In Whitechapel it is only one more thing the rich are keeping for themselves. I could have told them the price; nobody climbs my stairs now.`
+      : `A face is worth exactly one smile a bed in a fever ward; after that they want hands. He gave the hands. The face aged honestly through it, which in my professional opinion improved the drawing.`;
+    return p(`${s.marks.school?'The night school closed for the typhus; the ward took everyone. ':''}The winter the fever came up from the docks, beauty reported for duty and was assigned the mops. `+wishline);
+  },
+  choices:(s)=>[
+    {t:'Nurse through it yourself, shift for shift.', go:'A5', fade:.14},
+    {t:'Pay for twenty nurses and stand back from the beds.', go:'A5', fade:.14, set:x=>x.marks.paidBack=1}
+  ]
+},
+A5:{
+  st:'18— · THE LEGACY',
+  text:(s)=>p(
+    `Lady Agatha died in the spring, at her lists, and left him the whole apparatus: the clubs, the wards, the begging-letters — a fortune in obligations. At the funeral, Lord Henry, older, still the best-dressed sentence in England, took his arm: <span class="q">“Come back to life, Dorian. Philanthropy is the refuge of people who wish to annoy their fellow-creatures respectably. You were my one interesting mistake.”</span>`
+  ),
+  choices:(s)=>[
+    {t:'Dine once at Curzon Street for the old man’s sake, and come home by the last omnibus.', go:'A6', fade:.1, set:x=>x.marks.dined=1},
+    {t:'Send a wreath, and stay with the lists.', go:'A6', fade:.14}
+  ]
+},
+A6:{
+  st:'18— · EAST',
+  text:(s)=>p(
+    `${s.marks.dined?'He dined; the wit was as good as ever; he watched it the whole evening the way a man watches the sea he once nearly drowned in, and took the omnibus home. ':''}After that the record is subscription-lists, and minutes of committees, and one line in a parish magazine about the gentleman who plays on Tuesdays. The novel he was written for went on without him and did not notice the vacancy. Novels never do; that is what makes them novels, and what makes leaving them so cheap, and so dear.`
+  ),
+  choices:(s)=>[
+    {t:'(close the book)', go:'E3', bare:true}
+  ]
+},
+
+/* ================= CORRIDOR B — THE FOOTLIGHTS ================= */
+B1:{
+  st:'AUGUST, 18— · THE REGISTRY MORNING',
+  text:(s)=>p(
+    `Married, before a registrar, in a street where nobody wears orange-blossom: Dorian Gray, gentleman, twenty; Sibyl Vane, spinster, seventeen; witnesses, one painter, moved beyond all sense, and one mother, magnificent in renovated crape. Lord Radley, the guardian, replied by letter, and the letter smoked. Lord Henry sent silver and a sentence: <span class="q">“Both parties are to be congratulated on their courage; marriage requires more of it than war, and offers fewer decorations.”</span> James Vane, at sea, would learn of it months late, and unclench.`,
+    `The paint records the fact: from this page the two books never meet again.`
+  ),
+  choices:(s)=>[
+    {t:'Face the guardians in person, at Lord Radley’s own table.', go:'B2', fade:.14},
+    {t:'Let the lawyers answer the guardians; honeymoon instead.', go:'B2', fade:.14, set:x=>x.marks.honeymoon=1}
+  ]
+},
+B2:{
+  st:'AUTUMN, 18— · BUYING OUT ISAACS',
+  text:(s)=>p(
+    `Mr. Isaacs held articles on Sibyl for three years more and wept real tears at the sacrilege of losing her, the tears keeping excellent time with the negotiations. Dorian, not yet of age, could sign nothing; there followed a comedy of advances, promissory notes, and Isaacs blessing “The Bard” with his hand on the cash-box. It cost triple and was called a bargain. Everything in that world is theatre except the theatres, where it is business.`
+  ),
+  choices:(s)=>[
+    {t:'Pay Isaacs his triple with a bow, and part friends.', go:'B3', fade:.14},
+    {t:'Let a lawyer of Lord Henry’s squeeze Isaacs to the fair price.', go:'B3', fade:.14, set:x=>x.marks.squeezed=1}
+  ]
+},
+B3:{
+  st:'18— · THE VENTURE',
+  text:(s)=>p(
+    `He took a small West End house and brought her out properly: new boards, real moonlight of the best gas, her name in letters a foot high. And the other book’s law held like iron: loved, safe, and happy, Sibyl Gray could not act at all. The notices were kind to her face. The stalls papered themselves with friends. She stood in the wings on the last night of the first season, watching the empty rows, and laughed — laughed! — and said the shadows had been given their notice and taken the audience with them.`
+  ),
+  choices:(s)=>[
+    {t:'Keep the theatre open for her sake, season after season.', go:'B4', fade:.14, set:x=>x.marks.keptOpen=1},
+    {t:'Close the theatre before the second season, and call it a wedding-present to the drama.', go:'B4', fade:.14}
+  ]
+},
+B4:{
+  st:'18— · LORD HENRY’S VISIT',
+  text:(s)=>p(
+    `He came down at last, the old friend, beautifully unannounced, and walked the empty stage with his stick ringing on the boards. <span class="q">“Failure, Dorian, is the only thing one cannot forgive one’s friends; it is so dreadfully contagious. Come back to town. Bring the disease.”</span> He stayed to dinner; he was enchanting; Sibyl laughed at everything and trusted him with nothing, which was the most intelligent evening’s work I ever recorded of her.`
+  ),
+  choices:(s)=>[
+    {t:'Refuse Lord Henry with a laugh, and see him to the train.', go:'B5', fade:.14},
+    {t:'Dine with Lord Henry once in town — and come home late, and frightened of how good it felt.', go:'B5', fade:.14, set:x=>x.marks.tempted=1}
+  ]
+},
+B5:{
+  st:'18— · SELBY',
+  text:(s)=>p(
+    `${s.marks.tempted?'He did not go a second time. Some cures are taken like poison, in one dose, watched. ':''}They retired to Selby Royal on the profits of failure, which are considerable if one starts rich. The theatre was sold at a loss nobody mentioned twice. There were children, with her eyes. The county called on them out of curiosity and stayed out of comfort. ${s.wish?'He did not grow older — the county put it down to air and marriage, and Sibyl, who had been told about a June afternoon and a wish and had laughed her thrush’s laugh at it, aged for two, gracefully, and watched him sometimes across the lamplight with the look of a woman keeping a door shut by not mentioning it.':'He grew a little heavier at the jaw, a little grey at the temple, and — I set this down with professional astonishment — did not appear to mind.'}`
+  ),
+  choices:(s)=>[
+    {t:'The farm ledgers after breakfast, and the county’s dull dinners.', go:'B6', fade:.12},
+    {t:'The piano after dinner, and Sibyl doing all the voices.', go:'B6', fade:.12, set:x=>x.marks.voices=1}
+  ]
+},
+B6:{
+  st:'18— · EVENING',
+  text:(s)=>p(
+    `Of the later years the record is thin, because happiness is illiterate: it keeps no diary and pays no painter. ${s.wish?'I hung in the Selby attic, forgotten, ageing on his behalf by the original arrangement, doing for him quietly what the years did loudly for everyone he loved; if he ever remembered the terms, he never came up to renegotiate.':'I hung in the Selby attic, merely out of date — the portrait of a young man kept by an old one, which is the ordinary human arrangement, and the kindest.'}`
+  ),
+  choices:(s)=>[
+    {t:'(close the book)', go:'E2', bare:true}
+  ]
+},
+
+/* ================= CORRIDOR C — THE WHITE WALLS ================= */
+C1:{
+  st:'THE TENTH OF NOVEMBER · VICTORIA, DAWN',
+  text:(s)=>p(
+    `The boat-train Basil meant to catch left with his murderer on it. From the secret press in the wainscoting: the rough clothes, the muffler, the disguises a gentleman keeps the way other men keep prayers. The house was left sleeping; the schoolroom door was left locked; I was left — understand this — with the thing at the table for company, and no one in the world holding a key but a man gaining speed toward the coast.`
+  ),
+  choices:(s)=>[
+    {t:'Travel as a common man, under a false name, third class.', go:'C2', fade:.14},
+    {t:'Travel with your own face, and let it lie for you as usual.', go:'C2', fade:.14, set:x=>x.marks.ownface=1}
+  ]
+},
+C2:{
+  st:'NOVEMBER, 18— · PARIS',
+  text:(s)=>p(
+    `Two vanishings in one week make the papers even in Paris: the painter who never arrived, the gentleman who never came home. Scotland Yard preferred the midnight train theory and interviewed the fog. From here the record thins to what reached me through the sympathies: cold rooms, a name he answered to slowly, the Salon crowds where he stood in front of other men’s pictures the way debtors stand in front of banks.`
+  ),
+  choices:(s)=>[
+    {t:'South at once — Marseilles, and the first boat across.', go:'C3', fade:.14},
+    {t:'A week more of Paris, watching the crowds, daring the papers.', go:'C3', fade:.12, set:x=>x.marks.dared=1}
+  ]
+},
+C3:{
+  st:'WINTER, 18— · THE WHITE HOUSE AT ALGIERS',
+  text:(s)=>p(
+    `The little white walled-in house at Algiers where he had wintered once with Lord Henry — the lease taken through an agent of an agent, the shutters kept half-closed against the sun and the question. The town below is full of men who are not asked who they were. It is the one society where his face told no story, because every face there has agreed to be a stranger’s.`
+  ),
+  choices:(s)=>[
+    {t:'Keep the house dark, and go out only at dusk.', go:'C4', fade:.14},
+    {t:'Hire a boy to tell callers the master is old and sees no one.', go:'C4', fade:.14, set:x=>x.marks.boy=1}
+  ]
+},
+C4:{
+  st:'18— · THE WHITE YEARS',
+  text:(s)=>p(`Of the Algiers years I hold a bill of lading, a consular note, and the word of a fig-seller who never learned his name. The sympathies stretch thin over salt water. I know that he was; I no longer always knew what.`),
+  choices:(s)=>[
+    {t:'The pipe again, in the quarter where nobody remembers even themselves.', go:'C5', fade:.12, set:x=>x.marks.pipeAgain=1},
+    {t:'The sea at dawn, every day, like a man washing something.', go:'C5', fade:.12}
+  ]
+},
+C5:{
+  st:'18— · A FACE FROM THE OLD LIFE',
+  text:(s)=>p(
+    `One spring the tide of ruined Englishmen washed Adrian Singleton ashore at Algiers — the boy from the whispered list, the one who signed what he shouldn’t, further gone now, half past recognising anyone. Half. He looked a long time at the unaged face under the awning, and what he said was not a name; it was worse: <span class="q">“You here? Where else should either of us be.”</span>`
+  ),
+  choices:(s)=>[
+    {t:'Take Adrian Singleton in, and keep him.', go:'C6', fade:.1, set:x=>x.marks.keptAdrian=1},
+    {t:'Move on to Tangier that night, leaving money he will not refuse.', go:'C6', fade:.12}
+  ]
+},
+C6:{
+  st:'18— · WHITE',
+  text:(s)=>p(
+    `${s.marks.keptAdrian?'He kept Adrian, who died gently within the year, grateful and unfooled, the one mourner either of them would get. ':''}The wages in Grosvenor Square are paid quarterly through a solicitor who has never seen his client. The schoolroom door is bolted; the household believes the master travels; the master, at forty, at fifty, walks a white town at dusk with a face of twenty, unknown, unaging, unaccompanied. I rot alone in the dark on his behalf, which was the contract; he is safe, which was the point; and between those two clauses there was meant to be a life, and there is a view of the sea.`
+  ),
+  choices:(s)=>[
+    {t:'(close the book)', go:'E4', bare:true}
+  ]
+}
+};
+
+/* ============================== ENDINGS ============================== */
+
+function firstDivPhrase(s){ return s.divs.length ? s.divs[0].phrase : null; }
+
+const ENDINGS = {
+
+E1:{
+  name:'THE KNIFE',
+  verdict:(s)=> !s.wish ? 'You outlived the book.' : (s.divs.length===0 ? 'You died on Wilde’s schedule.' : 'You tried the other doors; they all led to this attic.'),
+  body:(s)=> !s.wish ? p(
+    `The knife went in and found only canvas and stretcher — Basil’s paint, eighteen years dry. ${s.marks.slashedEver?'There was little enough left to kill. ':''}Nothing cried out; nothing crashed; no servant woke. He stood a while in the dust with the lamp, an ageing man who had just murdered a picture, which is not an offence known to the law or, I can now report, to the picture.`,
+    `Then he went down, and lived: grew old at the ordinary rate, over the ordinary years, and died at last in his bed, believed by nobody about anything — least of all about a June afternoon when a certain wish had been offered him, at the usual price, and he had let it lie on the counter. I end as rags in an attic. Pictures do. It is the men who are asked to end otherwise.`
+  ) : p(
+    `<span class="q">He seized the thing, and stabbed the picture with it.</span>`,
+    `<span class="q">There was a cry heard, and a crash. The cry was so horrible in its agony that the frightened servants woke and crept out of their rooms. Two gentlemen, who were passing in the square below, stopped and looked up at the great house… When they entered, they found hanging upon the wall a splendid portrait of their master as they had last seen him, in all the wonder of his exquisite youth and beauty. Lying on the floor was a dead man, in evening dress, with a knife in his heart. He was withered, wrinkled, and loathsome of visage. It was not till they had examined the rings that they recognized who it was.</span>`,
+    `The knife found the only heart in the room. I am quite well, thank you. I am always quite well; that was the arrangement.`
+  ),
+  cmp:(s)=>{
+    if(!s.wish){
+      const f0 = firstDivPhrase(s) || 'in the studio, at the difference between a prayer and a silence';
+      return p(
+        `The two books part ${f0}. Wilde’s man said seventeen words before the finished picture and paid on them for eighteen years; yours let the wish lie, and the whole tragedy stood down like a hired orchestra.`,
+        `What was left was a life — unrecorded, unpunished, unremarkable. The author would have called that a waste of a perfectly good damnation. The sitter, at the end, in his bed, did not.`
+      );
+    }
+    if(s.divs.length===0) return p(
+      `You parted from him nowhere. The sermon, the wish, the cruelty in the greenroom, the yellow book, the knife on the stairs, the knife in the canvas — chapter for chapter, the book you made is the book Wilde wrote.`,
+      `I was the one page on which your hand might have differed from the author’s, and it never did. He is buried in the paint now, and patient. Begin again; the paint remembers nothing, which is more than can be said for either of us.`
+    );
+    const f = firstDivPhrase(s);
+    const falter = s.path.includes('n35b') ? ` On the last night yours even resolved otherwise, and the staircase talked him out of it, as staircases do.` : ``;
+    return p(
+      `The two books part ${f} — and rejoin on the last page. Whatever you altered on the way down, you arrived where Wilde’s man arrives: alone with me, holding the one knife that was always going to fit.${falter}`,
+      `His Dorian never had your hesitations, and the ending never needed them. That is the frightening thing about this ending, and I have had years up here to be frightened by it: it does not require you to hurry. It only requires you to keep the face.`
+    );
+  }
+},
+
+E1fire:{
+  name:'THE KNIFE', sub:'(by fire, and early)',
+  verdict:(s)=>'You skipped to the last page.',
+  body:(s)=>p(
+    `He put me on the grate face down, which I take as a kindness, and the flames got as far as the frame. The servants, waked by a cry so horrible in its agony that the square heard it, found the fire half-caught and, beside it, a dead man in a dressing-gown — withered, wrinkled, and loathsome of visage, aged decades in an evening. It was not till they had examined the rings that they recognized who it was. The canvas survives, scorched at one corner: a splendid portrait of a young man of extraordinary beauty, painter’s name in vermilion. Nobody has ever been able to say who the young man is.`
+  ),
+  cmp:(s)=>p(
+    `The two books part in the second week, where his Dorian bought a screen and yours bought firewood. Wilde’s man carried the account for eighteen years on the instalment plan; yours settled it in one evening, without reading the terms, which were on my side of the canvas.`,
+    `The receipt was the same withered face. The only economy in your version is the pity: nobody in it had time to deserve what happened, which Wilde would have called an argument against economy.`
+  )
+},
+
+E2:{
+  name:'HAPPILY, AND LONG',
+  verdict:(s)=> s.wish ? 'You were happy, which the author never permitted; the wish kept the change.' : 'You grew old, which the author never permitted.',
+  body:(s)=>p(
+    `They are entirely happy at Selby, and it must be said at once, in Wilde’s defence, that he could never have used them. Happiness has no second act. Sibyl does the voices after dinner — Rosalind for the children, Lady Macbeth for the vicar — and is applauded by the only audience that ever understood her, and the shadows keep away from a house so badly lit for them. ${s.wish?'Dorian is twenty at forty, and it is the one subject the house does not do voices about; happiness, in that family, is taken on the face’s word alone, since the face gives nothing else away.':'Dorian is stout at forty and glad of it: stoutness is the body’s way of signing for delivered goods.'} Lord Henry visits annually, is dazzling, is missed for a day after he leaves, like a headache. The one thing worth having turned out to be the one thing he was told it wasn’t; but then, he was told by a man who talked for a living.`
+  ),
+  cmp:(s)=>{
+    const f = firstDivPhrase(s) || 'at the greenroom door';
+    return p(
+      `The two books part ${f}. Wilde’s chapter needed a dead girl in a dressing-room to get on with its business; yours needed only a registry office and the patience of failure.`,
+      `He wrote a tragedy about a man who kept his face and lost the use of it. You have written the ending he refused on principle: contentment — which proves nothing, and outlives everything, and hangs no pictures in attics. ${s.wish?'I do his ageing in the Selby attic, by the terms of the old arrangement, and no one has ever come up to check the sum. A happy man never audits.':'I age up there honestly, by the way. Nobody looks. That, in this version, is what a happy ending is: a portrait nobody needs to consult.'}`
+    );
+  }
+},
+
+E3:{
+  name:'THE DUET',
+  verdict:(s)=>'You left the story; the story did not notice.',
+  body:(s)=>p(
+    s.wish
+      ? `He is not old now, and that is the one thing Whitechapel has decided not to discuss: the gentleman at the piano has been twenty for thirty years, and the ward-mothers, who grew grey nursing beside him, have settled between themselves that the rich keep even time for their own. The clubs run; the lists are kept; on Tuesdays he plays rather better than the room requires, and the room forgives him for it. No one in Whitechapel has read the other book. No one in Mayfair remembers the man in this one.`
+      : `He is old now, or at least — the ward-mothers have stopped being sure — he is <i>theirs</i> now, which serves. The clubs run; the lists are kept; on Tuesdays a gentleman plays the piano rather better than the room requires, and the room forgives him for it. No one in Whitechapel has read the other book. No one in Mayfair remembers the man in this one. He goes whole months, I believe, without being beautiful at anybody.`,
+    `Goodness, I find, photographs badly and paints worse: it is all repetition and no composition. That is my professional judgment, and the whole of my objection, and he has stopped asking for either.`
+  ),
+  cmp:(s)=>p(
+    `The two books part on the second afternoon, between a park and a promise. Wilde’s Dorian took the park, and the novel followed him down: Sibyl, the schoolroom, the fog, the knife — all of it, in your version, happening to nobody at all.`,
+    `Of your man the archive holds three entries and a subscription-list; of Wilde’s, twenty chapters. The novel went on without him and did not notice the vacancy — novels never do. The paint ran out where the record did. I do not call that a loss. I call it the one escape that was never locked, standing open on the second afternoon, disguised as an errand.`
+  )
+},
+
+E4:{
+  name:'THE WHITE WALLS',
+  verdict:(s)=>'The body escaped; nothing else applied for the journey.',
+  body:(s)=>p(
+    `He is safe. Say it plainly, since it was the point: no trial, no rope, no paragraph. A white town, a dark house, the sea at dusk, and a face that has agreed to be a stranger’s among faces that have agreed to the same. At forty he is twenty; at fifty he is twenty; the fig-seller’s grandson serves him now and thinks him a quiet young foreigner with old hands— no. The hands are young too. I withdraw the hands. There is nothing about him for memory to hold, and nothing holds him.`,
+    `I rot in the dark in Grosvenor Square, performing the sentence in his absence. The law of the wish never specified that he had to watch.`
+  ),
+  cmp:(s)=>{
+    const entry = s.divs.length ? s.divs[s.divs.length-1].phrase : 'on the night of the ninth, between a chemist and a boat-train';
+    return p(
+    `The two books part ${entry}. Wilde kept his man in London, within reach of the attic, and the attic won in the end, as attics do. Yours posted the soul abroad, carriage unpaid, and kept only the packaging.`,
+    `His ending needed a knife; yours needed only distance — and distance, I have found, rots slower than a knife but quite as thoroughly. The book that was written closes with a body that tells the truth at last. The book you made does not close. It merely goes out of print, one white year at a time.`
+    );
+  }
+},
+
+E5:{
+  name:'THE SENTENCE',
+  verdict:(s)=>'You accepted the sentence the author had quashed.',
+  body:(s)=>p(
+    s.marks.lampFailed
+      ? `He asked for the lamp himself, forgetting — or remembering — that no arrangement had ever been made about his face. The light gave the brother a man near forty, with eighteen legible years in him, and the oath completed itself in the dark beyond the arch. A sailor’s minute to make peace with God — he used it, I am told, to say the girl’s name, which may amount to the same thing. James Vane went on board and was never taken; they found a gentleman by the wharf with nothing on him to say who he was.`
+      : `<span class="q">“I am he.”</span> Under the lamp, the young face and the old name, and a sailor’s minute to make peace with God — he used it, I am told, to say the girl’s name, which may amount to the same thing. James Vane did his job and went on board, and was never taken; the oath had waited eighteen years and the law will wait longer. They found a gentleman by the wharf with nothing on him to say who he was.`,
+    s.wish
+      ? `In the schoolroom, that hour, I changed for the last time. Softened. The lie went out of the mouth — my mouth — the way heat goes out of a room. What was left on the canvas the servants will find someday and call a fine portrait of somebody’s son.`
+      : `Nothing changed in me that hour; nothing had ever changed; his account had been kept in the ordinary ledger of a living face, and was closed there, item by item, under a dock lamp. I remain the record of a June afternoon. It is enough.`
+  ),
+  cmp:(s)=>p(
+    s.marks.lampFailed
+      ? `The two books part under a lamp by the docks. Wilde reprieved his man there with a boy’s face and eighteen years of alibi — but yours had never bought the alibi; ${s.marks.slashedEver?'the wish had died on a palette-knife in a studio eighteen years back':'the wish lay unsaid in a studio eighteen years back'}, so the lamp read the truth out plainly, and the oath, which had waited half a lifetime for a legible face, completed itself.`
+      : `The two books part under a lamp by the docks. Wilde reprieved his man there with a boy’s face and eighteen years of alibi — the cruellest kindness in the novel, and its author knew it, and kept the brother’s bullet for a beater’s accident two chapters on. Yours refused the reprieve and paid the brother in the only coin he had sailed for.`,
+    `Wilde’s Dorian died of his own hand, in an attic, of the whole account at once. Yours died of Sibyl Vane’s family, in the open air, on time. The novel calls that melodrama; the parish calls it justice; I call it the shorter book, and the only one of all these endings in which somebody else’s page got turned right side up.`
+  )
+},
+
+E5law:{
+  name:'THE SENTENCE', sub:'(by the law)',
+  verdict:(s)=>'You accepted the sentence the author had quashed.',
+  body:(s)=>p(
+    `The sergeant at the desk did not believe the beautiful young man in evening dress, and then the constables came back down from the schoolroom, and everyone believed everything at once — except the face, which went on quietly contradicting the confession from the dock all through the trial, the loveliest perjury in the history of the Old Bailey. The jury took an hour; the face took none of it back. What the papers could not print, I recorded: the night the sentence was read, the cunning went out of my eyes. Not grace — I do not claim grace; call it the relief of a ledger balanced by force.`,
+    `They hanged a man of thirty-eight who looked twenty. The prison surgeon’s note survives: <i>age given, not apparent; God knows.</i>`
+  ),
+  cmp:(s)=>p(
+    `The two books part on the night of the ninth, when yours walked out of the fog into the station-house and put the truth on the desk like a hat. Wilde’s man spent the same hour reading a Blue Book for a chemist’s address; his book needed the body dissolved and the account carried forward at compound interest.`,
+    `Yours paid on the night. It is the one transaction in any of these versions that Lord Henry could never have phrased, and he attended the trial daily, and was heard, for the first time on record, saying nothing.`
+  )
+},
+
+E6:{
+  name:'SCARLET MADE SNOW',
+  verdict:(s)=>'You unwrote the ending; it cost you the face.',
+  body:(s)=>{
+    const withBasil = s.path.includes('n23c');
+    return p(
+      withBasil
+      ? `It was done as agreed, in daylight, with the shutters open: the lawyer, the letters, the names owned, the restitution begun — and me, shown. Carried down two flights and stood in the drawing-room for the world to visit, Basil Hallward’s masterpiece and its bill of particulars, side by side, the sitter present and answering questions. London came to sneer and mostly managed it. He stood the season of it, which was the sentence.`
+      : `It was done alone, which is harder, in daylight, with the shutters open: the lawyer, the letters, the names owned, the restitution begun — and me, shown, carried down two flights and stood where callers could not miss me. London came to sneer and mostly managed it. He stood the season of it, which was the sentence.`,
+      `And the surface — I give you my word as the only witness who cannot lie — the surface changed for the better. Slowly, at the price asked: for every year the canvas gave back, the man took one. They met in the middle, as honest portraits and honest sitters do: a man of middle age, a picture of middle age, neither remarkable, both plain-faced, both — the word is his, spoken in front of me to a visitor who asked — <i>clean</i>.`
+    );
+  },
+  cmp:(s)=>{
+    const withBasil = s.path.includes('n23c');
+    return p(
+      `${withBasil?'The two books part in the schoolroom, at the difference between a knife and a prayer.':`The two books part ${firstDivPhrase(s)||'long before the last chapter'}, and finally, for good, on the last night, at the difference between a knife and a confession.`} Wilde tried this door himself, in his last chapter, and painted a look of cunning on it: his Dorian came to it too late, alone, with the yellow book in his blood and the painter under the nitric acid, and the door held.`,
+      `Yours came ${withBasil?'with the painter still breathing beside him':'clean-handed and alone'}, the book uncut, the early faith kept — three small choices, made years apart, none of them looking like a key. The prayer had its second signature.`,
+      `His Dorian stayed beautiful into the evening papers. Yours grew old in front of witnesses, which is harder, and was forgiven, which is hardest. <span class="q">All art is quite useless,</span> says the preface. The preface never met you.`
+    );
+  }
+}
+};
+
+/* ============================== ENGINE ============================== */
+
+const $ = id=>document.getElementById(id);
+
+function paint(){
+  // canvas condition from rot / fade / age
+  const rot = Math.min(1, S.rot), fade = Math.min(1, S.fade);
+  const stIdx = S.path.length;
+  const age = Math.min(1, stIdx/40);
+  // base colour: ivory -> aged -> (fade: pale ground)
+  const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+  let bg = mix([239,230,207],[203,181,137], Math.max(rot*.9, age*.25));
+  bg = mix(bg,[236,231,219], fade*.8);
+  let ink = mix([43,33,24],[26,18,10], rot*.5);
+  ink = mix(ink,[132,124,110], fade*.85);
+  $('canvas').style.background = `rgb(${bg.join(',')})`;
+  $('text').style.color = `rgb(${ink.join(',')})`;
+  document.querySelectorAll('#finis .fname,#finis .verdict,#finis .cmp').forEach(e=>e.style.color=`rgb(${ink.join(',')})`);
+  $('vignette').style.opacity = (rot*.95).toFixed(2);
+  $('crack').style.opacity = (rot*.62).toFixed(2);
+  $('tarnish').style.opacity = (Math.max(rot*.55, fade*.35)).toFixed(2);
+  const fl = S.blood ? Math.min(1,(rot-.45)*1.6) : Math.max(0,(rot-.62)*1.4);
+  $('fleck').style.opacity = Math.max(0,fl).toFixed(2);
+  $('fleck').style.transform = `scale(${(0.6+Math.max(0,fl)).toFixed(2)})`;
+  $('grace').style.opacity = S.marks && S.marks.__grace ? .85 : 0;
+}
+
+function render(id){
+  S.node=id; save();
+  const n = NODES[id];
+  $('finis').style.display='none'; $('text').style.display='block';
+  $('station').textContent = n.st||'';
+  const ch=$('chapterhead');
+  if(n.head){ ch.style.display='block'; ch.textContent=n.head; } else ch.style.display='none';
+  $('text').innerHTML = (typeof n.text==='function')?n.text(S):n.text;
+  const box=$('choices'); box.innerHTML='';
+  n.choices(S).forEach(c=>{
+    if(c.cond && !c.cond(S)) return;
+    const b=document.createElement('button');
+    b.className='card'+(c.bare?' bare':'');
+    b.innerHTML=c.t;
+    b.onclick=()=>choose(c);
+    box.appendChild(b);
+  });
+  paint();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function choose(c){
+  if(c.go==='__resume'){ const sv=loadSave(); if(sv){ S=sv; render(S.node); } return; }
+  if(c.set) c.set(S);
+  if(c.rot) S.rot=Math.min(1,S.rot+c.rot);
+  if(c.fade) S.fade=Math.min(1,S.fade+c.fade);
+  if(c.div && !c.canon) S.divs.push({at:S.node, phrase:c.div});
+  S.path.push(S.node);
+  const dest = (typeof c.go==='function')?c.go(S):c.go;
+  if(ENDINGS[dest]) renderEnding(dest); else render(dest);
+}
+
+function renderEnding(id){
+  const e=ENDINGS[id];
+  S.node='__end'; clearSave();
+  if(id==='E6'){ S.marks.__grace=1; S.rot=Math.max(0,S.rot-.5); }
+  if(id==='E1'||id==='E1fire'){ S.rot=1; }
+  $('station').textContent='';
+  $('chapterhead').style.display='none';
+  $('text').style.display='block';
+  $('text').innerHTML = e.body(S);
+  const f=$('finis'); f.style.display='block';
+  f.querySelector('.fname').textContent = e.name + (e.sub?' '+e.sub:'');
+  f.querySelector('.verdict').textContent = e.verdict(S);
+  f.querySelector('.cmp').innerHTML = e.cmp(S);
+  const box=$('choices'); box.innerHTML='';
+  const b=document.createElement('button');
+  b.className='card'; b.style.textAlign='center';
+  b.innerHTML='begin again';
+  b.onclick=()=>{ S=freshState(); window.__resume=false; render('title'); };
+  box.appendChild(b);
+  paint();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================== BOOT ============================== */
+S=freshState();
+window.__resume = !!loadSave();
+render('title');
+</script>
+</body>
+</html>
