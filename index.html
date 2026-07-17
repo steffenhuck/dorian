@@ -73,7 +73,7 @@
     background-size:260px 260px;
   }
   #vignette{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.8s;
-    background:radial-gradient(115% 100% at 50% 42%, transparent 42%, rgba(38,26,12,.55) 76%, rgba(22,14,6,.92) 100%);}
+    background:radial-gradient(115% 100% at 50% 42%, transparent 55%, rgba(38,26,12,.4) 82%, rgba(22,14,6,.78) 100%);}
   #fleck{
     position:absolute;right:14%;bottom:9%;width:74px;height:60px;pointer-events:none;opacity:0;transition:opacity 2.4s, transform 2.4s;
     background:
@@ -1103,15 +1103,15 @@ function paint(){
   const age = Math.min(1, stIdx/40);
   // base colour: ivory -> aged -> (fade: pale ground)
   const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
-  let bg = mix([239,230,207],[209,189,148], Math.max(rot*.78, age*.25));
+  let bg = mix([239,230,207],[215,198,162], Math.max(rot*.65, age*.25));
   bg = mix(bg,[236,231,219], fade*.8);
   let ink = mix([43,33,24],[26,18,10], rot*.5);
   ink = mix(ink,[132,124,110], fade*.85);
   $('canvas').style.background = `rgb(${bg.join(',')})`;
   $('text').style.color = `rgb(${ink.join(',')})`;
   document.querySelectorAll('#finis .fname,#finis .verdict,#finis .cmp').forEach(e=>e.style.color=`rgb(${ink.join(',')})`);
-  $('vignette').style.opacity = (rot*.8).toFixed(2);
-  $('crack').style.opacity = (rot*.52).toFixed(2);
+  $('vignette').style.opacity = (rot*.7).toFixed(2);
+  $('crack').style.opacity = (rot*.42).toFixed(2);
   $('tarnish').style.opacity = (Math.max(rot*.55, fade*.35)).toFixed(2);
   const fl = S.blood ? Math.min(1,(rot-.45)*1.6) : Math.max(0,(rot-.62)*1.4);
   $('fleck').style.opacity = Math.max(0,fl).toFixed(2);
