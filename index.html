@@ -106,6 +106,7 @@
   .titlepage .sub{text-align:center;font-style:italic;margin-bottom:.2rem}
   .titlepage .credit{text-align:center;font-size:.85rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(90,68,40,.85);margin-bottom:1.6rem}
   .titlepage hr{border:none;border-top:1px solid rgba(90,68,40,.4);width:38%;margin:1.4rem auto}
+  .titlepage .dedication{text-align:center;font-style:italic;letter-spacing:.06em;color:rgba(80,58,32,.9);margin-top:.2rem}
   #finis{display:none;text-align:center}
   #finis .fname{font-variant:small-caps;letter-spacing:.24em;font-size:1.3rem;color:var(--ink);margin:.4rem 0 1rem}
   #finis .verdict{font-style:italic;margin-bottom:1.2rem;color:var(--ink)}
@@ -205,6 +206,7 @@ title:{
       `The reader of a book follows. The reader of this book chooses.`
       )}
       <hr>
+      <div class="dedication">for Heike</div>
     </div>`,
   choices:(s)=>{
     const c=[{t:'Draw back the pall, and begin.', go:'n1', canon:true}];
