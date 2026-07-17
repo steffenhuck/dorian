@@ -53,14 +53,14 @@
     box-shadow:inset 0 0 0 3px rgba(255,236,180,.14);
   }
   /* tarnish veil over the gilt, driven by JS */
-  #tarnish{position:absolute;inset:0;border-radius:4px;pointer-events:none;background:linear-gradient(135deg,rgba(24,20,12,.85),rgba(40,32,18,.7));opacity:0;transition:opacity 1.4s}
+  #tarnish{position:absolute;inset:0;border-radius:4px;pointer-events:none;background:linear-gradient(135deg,rgba(24,20,12,.85),rgba(40,32,18,.7));opacity:0;transition:opacity 9s ease-in-out}
   #canvas{
     position:relative;overflow:hidden;border-radius:1px;
     background:#efe6cf;
     min-height:340px;
     padding:2.4rem 2.6rem 2.6rem;
     box-shadow:inset 0 0 26px rgba(84,62,34,.28);
-    transition:background 1.6s;
+    transition:background 9s ease-in-out;
   }
   /* weave / paint grain */
   #canvas::before{
@@ -68,14 +68,14 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='linear' slope='0.06'/></feComponentTransfer></filter><rect width='140' height='140' filter='url(%23n)'/></svg>");
   }
   #crack{
-    position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;mix-blend-mode:multiply;
+    position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 11s ease-in-out;mix-blend-mode:multiply;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><filter id='c'><feTurbulence type='turbulence' baseFrequency='0.055' numOctaves='4' seed='7' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.22  0 0 0 0 0.16  0 0 0 0 0.10  0 0 0 0.9 -0.28'/></filter><rect width='260' height='260' filter='url(%23c)'/></svg>");
     background-size:260px 260px;
   }
-  #vignette{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.8s;
+  #vignette{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 11s ease-in-out;
     background:radial-gradient(115% 100% at 50% 42%, transparent 55%, rgba(38,26,12,.4) 82%, rgba(22,14,6,.78) 100%);}
   #fleck{
-    position:absolute;right:14%;bottom:9%;width:74px;height:60px;pointer-events:none;opacity:0;transition:opacity 2.4s, transform 2.4s;
+    position:absolute;right:14%;bottom:9%;width:74px;height:60px;pointer-events:none;opacity:0;transition:opacity 13s ease-in-out, transform 13s ease-in-out;
     background:
       radial-gradient(38% 42% at 46% 52%, rgba(122,16,18,.85), rgba(122,16,18,0) 70%),
       radial-gradient(20% 22% at 68% 34%, rgba(96,10,12,.8), rgba(96,10,12,0) 70%),
@@ -83,19 +83,19 @@
     filter:blur(1px);transform:scale(.6);
     mix-blend-mode:multiply;
   }
-  #grace{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 3s;
+  #grace{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 12s ease-in-out;
     background:radial-gradient(80% 70% at 50% 30%, rgba(255,244,205,.5), transparent 70%);mix-blend-mode:screen;}
   #inner{position:relative;z-index:3}
   #station{
     font-size:.72rem;letter-spacing:.28em;text-transform:uppercase;
     color:rgba(90,68,40,.85);text-align:center;margin-bottom:1.4rem;
-    transition:color 1.6s;
+    transition:color 9s ease-in-out;
   }
   #chapterhead{
     display:none;text-align:center;font-variant:small-caps;letter-spacing:.2em;
     color:rgba(80,58,32,.9);margin-bottom:1.1rem;font-size:1.02rem;
   }
-  #text{color:var(--ink);font-size:1.06rem;line-height:1.72;transition:color 1.6s}
+  #text{color:var(--ink);font-size:1.06rem;line-height:1.72;transition:color 9s ease-in-out}
   #text p{margin:0 0 1.05em}
   #text p:last-child{margin-bottom:0}
   #text .q{font-style:italic}
@@ -1103,15 +1103,15 @@ function paint(){
   const age = Math.min(1, stIdx/40);
   // base colour: ivory -> aged -> (fade: pale ground)
   const mix=(a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
-  let bg = mix([239,230,207],[215,198,162], Math.max(rot*.65, age*.25));
+  let bg = mix([239,230,207],[215,198,162], Math.max(rot*.5, age*.25));
   bg = mix(bg,[236,231,219], fade*.8);
   let ink = mix([43,33,24],[26,18,10], rot*.5);
   ink = mix(ink,[132,124,110], fade*.85);
   $('canvas').style.background = `rgb(${bg.join(',')})`;
   $('text').style.color = `rgb(${ink.join(',')})`;
   document.querySelectorAll('#finis .fname,#finis .verdict,#finis .cmp').forEach(e=>e.style.color=`rgb(${ink.join(',')})`);
-  $('vignette').style.opacity = (rot*.7).toFixed(2);
-  $('crack').style.opacity = (rot*.42).toFixed(2);
+  $('vignette').style.opacity = (rot*.5).toFixed(2);
+  $('crack').style.opacity = (rot*.34).toFixed(2);
   $('tarnish').style.opacity = (Math.max(rot*.55, fade*.35)).toFixed(2);
   const fl = S.blood ? Math.min(1,(rot-.45)*1.6) : Math.max(0,(rot-.62)*1.4);
   $('fleck').style.opacity = Math.max(0,fl).toFixed(2);
